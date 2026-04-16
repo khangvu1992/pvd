@@ -1,0 +1,97 @@
+Sub XuLyTongHop()
+
+    Dim ws As Worksheet
+    Dim lastRow As Long
+    Dim i As Long, j As Long
+    Dim arr As Variant
+    Dim str1 As String
+    
+    Dim outputE As Long
+    Dim outputF As Long
+    
+    Set ws = ActiveSheet
+    
+    lastRow = ws.Cells(ws.Rows.Count, "A").End(xlUp).Row
+    
+    outputE = 1
+    outputF = 1
+    
+    ' ====== BƯỚC 1: TÁCH CỘT A ======
+    For i = 1 To lastRow
+        
+        If ws.Cells(i, 1).Value <> "" Then
+            
+            arr = Split(ws.Cells(i, 1).Value, "-")
+            str1 = arr(0)
+            
+            ' B: chữ
+            ws.Cells(i, 2).Value = Left(str1, 1)
+            
+            ' C: số bỏ 0
+            ws.Cells(i, 3).Value = Val(Mid(str1, 2))
+            
+            ' D: số sau "-"
+            If UBound(arr) >= 1 Then
+                ws.Cells(i, 4).Value = Val(arr(1))
+            End If
+            
+        End If
+        
+    Next i
+    
+    ' ====== BƯỚC 2: LẶP SANG CỘT E ======
+    For i = 1 To lastRow
+        
+        If ws.Cells(i, 3).Value <> "" And ws.Cells(i, 4).Value <> "" Then
+            
+            For j = 1 To ws.Cells(i, 4).Value
+                ws.Cells(outputE, 5).Value = ws.Cells(i, 3).Value
+                outputE = outputE + 1
+            Next j
+            
+        End If
+        
+    Next i
+    
+    ' ====== BƯỚC 3: TẠO CỘT F (LẺ + CHẴN) ======
+    i = 1
+    
+    Do While i <= lastRow
+        
+        Dim d1 As Long, d2 As Long
+        Dim valOdd As Long, valEven As Long
+        
+        ' Dãy lẻ
+        d1 = ws.Cells(i, 4).Value
+        valOdd = 1
+        
+        For j = 1 To d1
+            ws.Cells(outputF, 6).Value = valOdd
+            valOdd = valOdd + 2
+            outputF = outputF + 1
+        Next j
+        
+        ' Dãy chẵn (dòng tiếp theo)
+        If i + 1 <= lastRow Then
+            
+            d2 = ws.Cells(i + 1, 4).Value
+            valEven = d2 * 2
+            
+            For j = 1 To d2
+                ws.Cells(outputF, 6).Value = valEven
+                valEven = valEven - 2
+                
+                If valEven < 2 Then valEven = 2
+                
+                outputF = outputF + 1
+            Next j
+            
+        End If
+        
+        i = i + 2
+        
+    Loop
+    
+    MsgBox "Xử lý xong toàn bộ!"
+    
+End Sub

@@ -1,0 +1,76 @@
+Sub TaoThoiGian()
+
+    Dim i As Long
+    Dim lastRow As Long
+    Dim t As Date
+    Dim randSec As Long
+    
+    Dim startMorning As Date
+    Dim startBreak As Date
+    Dim endBreak As Date
+    Dim endAfternoon As Date
+    Dim startEvening As Date
+    
+    ' ===== HỎI NGƯỜI DÙNG =====
+    lastRow = Application.InputBox("Nhập số dòng cần tạo:", "Số dòng", Type:=1)
+    If lastRow <= 0 Then Exit Sub
+    
+    Randomize
+    
+    ' ===== RANDOM CÁC MỐC =====
+    startMorning = TimeValue("07:11:00") + _
+        TimeSerial(0, 0, Int((600 - 2 + 1) * Rnd + 2)) * IIf(Rnd < 0.5, -1, 1)
+    
+    startBreak = TimeValue("11:30:00") + _
+        TimeSerial(0, 0, Int((5 - (-5) + 1) * Rnd + (-5)))
+    
+    endBreak = TimeValue("13:30:00") + _
+        TimeSerial(0, 0, Int((10 - (-10) + 1) * Rnd + (-10)))
+    
+    endAfternoon = TimeValue("17:30:00") + _
+        TimeSerial(0, 0, Int((50 - 10 + 1) * Rnd + 10)) * IIf(Rnd < 0.5, -1, 1)
+    
+    startEvening = TimeValue("18:15:00") + _
+        TimeSerial(0, 0, Int((300 - 2 + 1) * Rnd + 2)) * IIf(Rnd < 0.5, -1, 1)
+    
+    ' ===== XÓA DỮ LIỆU CŨ =====
+    Columns("J:L").ClearContents
+    
+    ' ===== BẮT ĐẦU =====
+    t = startMorning
+    
+    For i = 1 To lastRow
+        
+        If t >= TimeValue("23:00:00") Then Exit For
+        
+        ' Cột J
+        Cells(i, "J").Value = t
+        
+        ' Cột K = J + random 12-15 giây
+        Cells(i, "K").Value = t + TimeSerial(0, 0, Int((15 - 12 + 1) * Rnd + 12))
+        
+        ' Cột L = random 0.01 → 0.15
+        Cells(i, "L").Value = Int((15 - 1 + 1) * Rnd + 1) / 100
+        
+        ' Tăng thời gian
+        randSec = Int((25 - 20 + 1) * Rnd + 20)
+        t = t + TimeSerial(0, 0, randSec)
+        
+        ' Nghỉ trưa
+        If t >= startBreak And t < endBreak Then
+            t = endBreak
+        End If
+        
+        ' Nghỉ chiều
+        If t >= endAfternoon And t < startEvening Then
+            t = startEvening
+        End If
+        
+    Next i
+
+    Columns("J:K").NumberFormat = "hh:mm:ss"
+    Columns("L").NumberFormat = "0.00"
+    
+    MsgBox "Đã tạo xong " & i - 1 & " dòng!", vbInformation
+
+End Sub
