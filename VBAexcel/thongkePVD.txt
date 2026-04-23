@@ -1,0 +1,97 @@
+(defun c:TKHANG ( / pl pts ss p1 p2 dir tol groups i obj pt d found sorted)
+
+  ;; ===== 1. CHON POLYLINE =====
+  (setq pl (car (entsel "\nChon polyline bao vung: ")))
+
+  (if (not pl)
+    (progn (prompt "\nKhong chon polyline!") (exit))
+  )
+
+  ;; lay danh sach diem polyline
+  (setq pts '())
+  (foreach x (entget pl)
+    (if (= (car x) 10)
+      (setq pts (cons (cdr x) pts))
+    )
+  )
+
+  ;; ===== 2. CHON DOI TUONG TRONG VUNG =====
+  (setq ss (ssget "_WP" pts))
+
+  (if (not ss)
+    (progn (prompt "\nKhong co doi tuong trong vung!") (exit))
+  )
+
+  ;; ===== 3. CHON HUONG =====
+  (prompt "\nChon 2 diem THEO HUONG VUONG GOC VOI HANG: ")
+  (setq p1 (getpoint "\nDiem 1: "))
+  (setq p2 (getpoint p1 "\nDiem 2: "))
+
+  (setq dir (mapcar '- p2 p1))
+
+  ;; ===== 4. NHAP SAI SO =====
+  (setq tol (getreal "\nNhap sai so (vd: 0.1): "))
+  (if (not tol) (setq tol 0.1))
+
+  ;; ===== 5. PHAN CUM =====
+  (setq groups '())
+  (setq i 0)
+
+  (while (< i (sslength ss))
+    (setq obj (ssname ss i))
+    (setq pt (cdr (assoc 10 (entget obj))))
+
+    (if pt
+      (progn
+        ;; tinh d (khoang cach vuong goc)
+        (setq d (/ (abs (+ (* (car dir) (- (cadr pt) (cadr p1)))
+                           (* (- (cadr dir)) (- (car pt) (car p1)))))
+                   (distance '(0 0 0) dir)))
+
+        (setq found nil)
+
+        ;; tim cum gan nhat
+        (foreach g groups
+          (if (< (abs (- d (car g))) tol)
+            (progn
+              (setq groups (subst (cons (car g) (+ 1 (cdr g))) g groups))
+              (setq found T)
+            )
+          )
+        )
+
+        ;; neu chua co cum
+        (if (not found)
+          (setq groups (cons (cons d 1) groups))
+        )
+      )
+    )
+
+    (setq i (1+ i))
+  )
+
+  ;; ===== 6. SAP XEP THEO THU TU HANG =====
+  (setq sorted
+    (vl-sort groups
+      '(lambda (a b) (< (car a) (car b)))
+    )
+  )
+
+  ;; ===== 7. IN KET QUA =====
+  (prompt "\n====== KET QUA ======")
+
+  (setq i 1)
+  (foreach g sorted
+    (prompt
+      (strcat
+        "\nHang " (itoa i)
+        " | d = " (rtos (car g) 2 3)
+        " | So doi tuong = " (itoa (cdr g))
+      )
+    )
+    (setq i (1+ i))
+  )
+
+  (prompt "\n=====================")
+  (princ)
+)

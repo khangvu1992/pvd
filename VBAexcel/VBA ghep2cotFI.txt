@@ -1,0 +1,17 @@
+Sub GhepCotF_I()
+
+    Dim i As Long
+    Dim lastRow As Long
+    
+    ' Tìm dòng cuối dựa vào cột F (hoặc I nếu dài hơn thì chỉnh lại)
+    lastRow = Cells(Rows.Count, "F").End(xlUp).Row
+    
+    ' Xóa cột K cũ (nếu muốn)
+    Range("K:K").ClearContents
+    
+    For i = 1 To lastRow
+        Cells(2 * i - 1, "K").Value = Cells(i, "F").Value ' K1, K3, K5...
+        Cells(2 * i, "K").Value = Cells(i, "I").Value     ' K2, K4, K6...
+    Next i
+
+End Sub

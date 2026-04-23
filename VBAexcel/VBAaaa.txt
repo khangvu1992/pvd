@@ -1,0 +1,15 @@
+Sub GhepCotJ_K()
+
+    Dim i As Long
+    Dim lastRow As Long
+    
+    lastRow = Cells(Rows.Count, "J").End(xlUp).Row
+    
+    For i = 1 To lastRow
+        If Cells(i, "J").Value <> "" Then
+            Cells(i, "L").Value = "C" & Format(Cells(i, "J").Value, "000") & "-" & Cells(i, "K").Value
+        End If
+    Next i
+
+End Sub
+
