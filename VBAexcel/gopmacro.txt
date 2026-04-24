@@ -1,97 +1,156 @@
-Sub XuLyTongHop()
+Sub AutoCAD_To_Excel_And_Process()
 
-    Dim ws As Worksheet
-    Dim lastRow As Long
+    Dim acadApp As Object
+    Dim doc As Object
+    Dim ss As Object
+    Dim ent As Object
+
+    Dim xlApp As Object
+    Dim wb As Object
+    Dim ws As Object
+
     Dim i As Long, j As Long
-    Dim arr As Variant
-    Dim str1 As String
-    
+    Dim lastRow As Long
     Dim outputE As Long
     Dim outputF As Long
-    
-    Set ws = ActiveSheet
-    
-    lastRow = ws.Cells(ws.Rows.Count, "A").End(xlUp).Row
-    
+
+    Dim arr As Variant
+    Dim str1 As String
+
+    ' =========================
+    ' 1. CONNECT EXCEL
+    ' =========================
+    Set xlApp = CreateObject("Excel.Application")
+    xlApp.Visible = True
+
+    Set wb = xlApp.Workbooks.Add
+    Set ws = wb.Sheets(1)
+
+    ' =========================
+    ' 2. CONNECT AUTOCAD
+    ' =========================
+    Set acadApp = GetObject(, "AutoCAD.Application")
+    Set doc = acadApp.ActiveDocument
+
+    ' =========================
+    ' 3. SELECT TEXT + MTEXT
+    ' =========================
+    On Error Resume Next
+    doc.SelectionSets.Item("SS1").Delete
+    On Error GoTo 0
+
+    Set ss = doc.SelectionSets.Add("SS1")
+
+    Dim filterType(0) As Integer
+    Dim filterData(0) As Variant
+
+    filterType(0) = 0
+    filterData(0) = "TEXT,MTEXT"
+
+    ss.SelectOnScreen filterType, filterData
+
+    If ss.Count = 0 Then
+        MsgBox "Không có đối tượng!"
+        Exit Sub
+    End If
+
+    ' =========================
+    ' 4. ĐỔ DATA VÀO CỘT A (THEO THỨ TỰ CHỌN)
+    ' =========================
+    i = 1
+
+    For Each ent In ss
+        If ent.ObjectName = "AcDbText" Or ent.ObjectName = "AcDbMText" Then
+            ws.Cells(i, 1).Value = ent.TextString
+            i = i + 1
+        End If
+    Next ent
+
+    ' =========================
+    ' 5. SORT CỘT A (A → Z)
+    ' =========================
+    lastRow = ws.Cells(ws.Rows.Count, "A").End(-4162).Row
+
+    ws.Range("A1:A" & lastRow).Sort _
+        Key1:=ws.Range("A1"), _
+        Order1:=1, _
+        Header:=0
+
+    ' =========================
+    ' 6. XỬ LÝ GIỐNG LISP CỦA BẠN
+    ' =========================
+
     outputE = 1
     outputF = 1
-    
-    ' ====== BƯỚC 1: TÁCH CỘT A ======
+
+    ' ===== BƯỚC 1 =====
     For i = 1 To lastRow
-        
+
         If ws.Cells(i, 1).Value <> "" Then
-            
+
             arr = Split(ws.Cells(i, 1).Value, "-")
             str1 = arr(0)
-            
-            ' B: chữ
+
             ws.Cells(i, 2).Value = Left(str1, 1)
-            
-            ' C: số bỏ 0
             ws.Cells(i, 3).Value = Val(Mid(str1, 2))
-            
-            ' D: số sau "-"
+
             If UBound(arr) >= 1 Then
                 ws.Cells(i, 4).Value = Val(arr(1))
             End If
-            
+
         End If
-        
+
     Next i
-    
-    ' ====== BƯỚC 2: LẶP SANG CỘT E ======
+
+    ' ===== BƯỚC 2 =====
     For i = 1 To lastRow
-        
+
         If ws.Cells(i, 3).Value <> "" And ws.Cells(i, 4).Value <> "" Then
-            
+
             For j = 1 To ws.Cells(i, 4).Value
                 ws.Cells(outputE, 5).Value = ws.Cells(i, 3).Value
                 outputE = outputE + 1
             Next j
-            
+
         End If
-        
+
     Next i
-    
-    ' ====== BƯỚC 3: TẠO CỘT F (LẺ + CHẴN) ======
+
+    ' ===== BƯỚC 3 =====
     i = 1
-    
+
     Do While i <= lastRow
-        
+
         Dim d1 As Long, d2 As Long
         Dim valOdd As Long, valEven As Long
-        
-        ' Dãy lẻ
+
         d1 = ws.Cells(i, 4).Value
         valOdd = 1
-        
+
         For j = 1 To d1
             ws.Cells(outputF, 6).Value = valOdd
             valOdd = valOdd + 2
             outputF = outputF + 1
         Next j
-        
-        ' Dãy chẵn (dòng tiếp theo)
+
         If i + 1 <= lastRow Then
-            
+
             d2 = ws.Cells(i + 1, 4).Value
             valEven = d2 * 2
-            
+
             For j = 1 To d2
                 ws.Cells(outputF, 6).Value = valEven
                 valEven = valEven - 2
-                
                 If valEven < 2 Then valEven = 2
-                
                 outputF = outputF + 1
             Next j
-            
+
         End If
-        
+
         i = i + 2
-        
+
     Loop
-    
-    MsgBox "Xử lý xong toàn bộ!"
-    
+
+    MsgBox "DONE: CAD → EXCEL → SORT → PROCESS XONG!"
+
 End Sub
